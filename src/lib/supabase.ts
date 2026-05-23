@@ -1,26 +1,20 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Lead, ChannelDef, LeadStatus, Channel } from "./store-types";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "./env";
 
-const rawUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const rawKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-
-export const supabaseConfigured = Boolean(rawUrl && rawKey);
+export { supabaseConfigured, SUPABASE_CONFIG_HINT } from "./env";
 
 if (!supabaseConfigured && typeof window !== "undefined") {
   // eslint-disable-next-line no-console
-  console.warn(
-    "[Supabase] Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY in .env.local — DB calls will fail.",
-  );
+  console.warn("[Supabase] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY not set at build time.");
 }
 
-// Placeholder values let createClient succeed at import time even before the user
-// has filled in .env.local. Actual calls are gated by `supabaseConfigured`.
 const PLACEHOLDER_URL = "https://placeholder.supabase.co";
 const PLACEHOLDER_KEY = "placeholder-anon-key";
 
 export const supabase: SupabaseClient = createClient(
-  rawUrl || PLACEHOLDER_URL,
-  rawKey || PLACEHOLDER_KEY,
+  SUPABASE_URL || PLACEHOLDER_URL,
+  SUPABASE_ANON_KEY || PLACEHOLDER_KEY,
   {
     auth: {
       persistSession: true,

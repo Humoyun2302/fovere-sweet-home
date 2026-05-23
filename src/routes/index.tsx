@@ -1,20 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { toast } from "sonner";
-import {
-  Star,
-  ArrowRight,
-  CheckCircle2,
-  Phone,
-  Instagram,
-  Youtube,
-  Mail,
-  MapPin,
-} from "lucide-react";
+import { Star, Phone, Instagram, Youtube, Mail, MapPin } from "lucide-react";
 import founderImg from "@/assets/founder.png";
 import { Logo } from "@/components/Logo";
-import { formatPhone, isValidPhone, PHONE_INVALID_MESSAGE, PHONE_PLACEHOLDER } from "@/lib/phone";
-import { useStore, type Channel } from "@/lib/store";
+import { LeadEstimateForm } from "@/components/LeadEstimateForm";
 
 const INSTAGRAM_URL = "https://www.instagram.com/fovere_des?igsh=MWdpM2sxOG1vYmFiZQ==";
 const YOUTUBE_URL = "https://youtube.com/@fovere_des?si=9JgFKN-LxbnEQi9x";
@@ -34,76 +22,7 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-function getChannelSlugFromUrl() {
-  if (typeof window === "undefined") return null;
-  return new URLSearchParams(window.location.search).get("channel");
-}
-
 function Landing() {
-  const { addLead } = useStore();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [budget, setBudget] = useState<string>("");
-  const [wants, setWants] = useState<boolean | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  const [channelSlug] = useState(getChannelSlugFromUrl);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return toast.error("Iltimos, ismingizni kiriting");
-    if (!phone.trim() || !isValidPhone(phone)) return toast.error(PHONE_INVALID_MESSAGE);
-    if (wants === null) return toast.error("Tanlovni belgilang");
-
-    setSubmitting(true);
-
-    // Derive channel key DIRECTLY from URL slug so it works even before
-    // the channels table loads. The DB check constraint allows:
-    // ('direct','youtube','instagram','telegram','other').
-    const channelKey: Channel = !channelSlug
-      ? "direct"
-      : channelSlug.includes("youtube")
-        ? "youtube"
-        : channelSlug.includes("instagram")
-          ? "instagram"
-          : channelSlug.includes("telegram")
-            ? "telegram"
-            : "other";
-
-    const channelLabel = channelSlug
-      ? channelSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-      : "Bevosita";
-
-    const payload = {
-      name: name.trim(),
-      phone: phone.trim(),
-      wantsRenovation: wants,
-      budget: budget ? Number(budget.replace(/\D/g, "")) || undefined : undefined,
-      channel: channelKey,
-      channelLabel,
-    };
-    // eslint-disable-next-line no-console
-    console.warn("[submit]", { channelSlug, payload });
-    try {
-      await addLead(payload);
-      toast.success("Arizangiz qabul qilindi!");
-      setSubmitted(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Yuborishda xatolik");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const reset = () => {
-    setName("");
-    setPhone("");
-    setBudget("");
-    setWants(null);
-    setSubmitted(false);
-  };
-
   return (
     <div className="min-h-screen bg-canvas relative overflow-x-hidden">
       <div className="relative z-10">
@@ -124,82 +43,7 @@ function Landing() {
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6 pb-16 lg:gap-12 lg:flex-1 lg:min-h-0 lg:pb-3 lg:items-stretch">
-              {/* Form / Success */}
-              <div className="lead-form-card p-8 lg:p-6 lg:flex lg:flex-col lg:min-h-0">
-            {!submitted ? (
-              <>
-                <h2 className="lead-form-title">ARIZA QOLDIRING</h2>
-                <form onSubmit={submit} className="lead-form" noValidate>
-                  <LeadField label="ISMINGIZ *">
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Masalan: Ali Valiyev"
-                      className="lead-input"
-                    />
-                  </LeadField>
-
-                  <LeadField label="TELEFON RAQAMINGIZ *">
-                    <input
-                      inputMode="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(formatPhone(e.target.value))}
-                      placeholder={PHONE_PLACEHOLDER}
-                      className="lead-input"
-                    />
-                  </LeadField>
-
-                  <LeadField label="BYUDJETINGIZ (ixtiyoriy, $)">
-                    <input
-                      inputMode="numeric"
-                      value={budget}
-                      onChange={(e) => setBudget(e.target.value.replace(/[^\d]/g, ""))}
-                      placeholder="Masalan: 10000"
-                      className="lead-input"
-                    />
-                  </LeadField>
-
-                  <div>
-                    <label className="lead-label">UYINGIZNI REMONT QILDIRMOQCHIMISIZ? *</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <ToggleOpt active={wants === true} onClick={() => setWants(true)}>
-                        Ha, qildirmoqchiman
-                      </ToggleOpt>
-                      <ToggleOpt active={wants === false} onClick={() => setWants(false)}>
-                        Yo'q, bonus olmoqchiman
-                      </ToggleOpt>
-                    </div>
-                  </div>
-
-                  <button type="submit" disabled={submitting} className="lead-submit">
-                    {submitting ? "YUBORILMOQDA..." : "YUBORISH"}
-                  </button>
-                  <p className="lead-secure">
-                    <span className="lead-secure-dot" aria-hidden>
-                      ●
-                    </span>
-                    XAVFSIZ ULANISH FAOL
-                  </p>
-                </form>
-              </>
-            ) : (
-              <div className="text-center py-8 flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
-                <div className="h-16 w-16 rounded-full bg-gold/15 grid place-items-center">
-                  <CheckCircle2 className="h-9 w-9 text-gold" />
-                </div>
-                <h2 className="text-2xl font-bold text-white">Rahmat, {name.split(" ")[0]}!</h2>
-                <p className="text-muted-foreground max-w-sm">
-                  Arizangiz qabul qilindi. Mutaxassisimiz tez orada siz bilan bog'lanadi.
-                </p>
-                <button
-                  onClick={reset}
-                  className="mt-2 inline-flex items-center gap-1 text-sm text-gold hover:underline"
-                >
-                  Yana bir ariza yuborish <ArrowRight className="h-3 w-3" />
-                </button>
-              </div>
-            )}
-          </div>
+              <LeadEstimateForm />
 
               {/* Founder card */}
               <div className="group relative rounded-2xl overflow-hidden border border-border bg-card min-h-[500px] lg:min-h-0 lg:h-full transition-[border-color,box-shadow] duration-500 ease-out hover:border-gold/35 hover:shadow-2xl hover:shadow-black/50">
@@ -325,34 +169,5 @@ function Footer() {
         </div>
       </div>
     </footer>
-  );
-}
-
-function LeadField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="lead-label">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function ToggleOpt({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`lead-toggle w-full ${active ? "lead-toggle--active" : ""}`}
-    >
-      {children}
-    </button>
   );
 }

@@ -11,6 +11,7 @@ import {
 import {
   supabase,
   supabaseConfigured,
+  SUPABASE_CONFIG_HINT,
   rowToLead,
   rowToChannel,
   leadToRow,
@@ -264,7 +265,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const store: Store = useMemo(() => {
     function throwIfNotConfigured() {
       if (!supabaseConfigured) {
-        throw new Error("Supabase ulanmagan. .env.local faylini sozlang.");
+        throw new Error(`Supabase ulanmagan. ${SUPABASE_CONFIG_HINT}`);
       }
     }
 
@@ -278,7 +279,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       login: async (email, password) => {
         if (!supabaseConfigured) {
-          return { ok: false, error: "Supabase ulanmagan. .env.local faylini sozlang." };
+          return { ok: false, error: `Supabase ulanmagan. ${SUPABASE_CONFIG_HINT}` };
         }
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
