@@ -3,12 +3,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   Star,
-  Lock,
   ArrowRight,
   CheckCircle2,
   Phone,
-  User,
-  Wallet,
   Instagram,
   Youtube,
   Mail,
@@ -128,46 +125,42 @@ function Landing() {
 
             <div className="grid lg:grid-cols-2 gap-6 pb-16 lg:gap-12 lg:flex-1 lg:min-h-0 lg:pb-3 lg:items-stretch">
               {/* Form / Success */}
-              <div className="rounded-2xl bg-card border border-border p-8 lg:p-5 shadow-2xl lg:flex lg:flex-col lg:min-h-0">
+              <div className="lead-form-card p-8 lg:p-6 lg:flex lg:flex-col lg:min-h-0">
             {!submitted ? (
               <>
-                <h2 className="text-xl lg:text-lg font-bold tracking-wider text-white mb-6 lg:mb-3">
-                  ARIZA QOLDIRING
-                </h2>
-                <form onSubmit={submit} className="space-y-5 lg:space-y-3" noValidate>
-                  <Field label="ISMINGIZ *" icon={User}>
+                <h2 className="lead-form-title">ARIZA QOLDIRING</h2>
+                <form onSubmit={submit} className="lead-form" noValidate>
+                  <LeadField label="ISMINGIZ *">
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Masalan: Ali Valiyev"
-                      className="w-full bg-input border border-border rounded-lg pl-10 pr-4 py-3 lg:py-2.5 text-white placeholder:text-muted-foreground/60 focus:outline-none focus:border-gold transition"
+                      className="lead-input"
                     />
-                  </Field>
+                  </LeadField>
 
-                  <Field label="TELEFON RAQAMINGIZ *" icon={Phone}>
+                  <LeadField label="TELEFON RAQAMINGIZ *">
                     <input
                       inputMode="tel"
                       value={phone}
                       onChange={(e) => setPhone(formatPhone(e.target.value))}
                       placeholder={PHONE_PLACEHOLDER}
-                      className="w-full bg-input border border-border rounded-lg pl-10 pr-4 py-3 lg:py-2.5 text-white placeholder:text-muted-foreground/60 focus:outline-none focus:border-gold transition"
+                      className="lead-input"
                     />
-                  </Field>
+                  </LeadField>
 
-                  <Field label="BYUDJETINGIZ (ixtiyoriy, $)" icon={Wallet}>
+                  <LeadField label="BYUDJETINGIZ (ixtiyoriy, $)">
                     <input
                       inputMode="numeric"
                       value={budget}
                       onChange={(e) => setBudget(e.target.value.replace(/[^\d]/g, ""))}
                       placeholder="Masalan: 10000"
-                      className="w-full bg-input border border-border rounded-lg pl-10 pr-4 py-3 lg:py-2.5 text-white placeholder:text-muted-foreground/60 focus:outline-none focus:border-gold transition"
+                      className="lead-input"
                     />
-                  </Field>
+                  </LeadField>
 
                   <div>
-                    <label className="block text-xs text-muted-foreground tracking-wider font-semibold mb-2">
-                      UYINGIZNI REMONT QILDIRMOQCHIMISIZ? *
-                    </label>
+                    <label className="lead-label">UYINGIZNI REMONT QILDIRMOQCHIMISIZ? *</label>
                     <div className="grid grid-cols-2 gap-3">
                       <ToggleOpt active={wants === true} onClick={() => setWants(true)}>
                         Ha, qildirmoqchiman
@@ -178,16 +171,15 @@ function Landing() {
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full bg-gold hover:bg-gold/90 text-primary-foreground font-bold py-4 lg:py-3 rounded-lg tracking-wider transition shadow-lg shadow-gold/20 disabled:opacity-60"
-                  >
+                  <button type="submit" disabled={submitting} className="lead-submit">
                     {submitting ? "YUBORILMOQDA..." : "YUBORISH"}
                   </button>
-                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
-                    <Lock className="h-3 w-3" /> XAVFSIZ ULANISH FAOL
-                  </div>
+                  <p className="lead-secure">
+                    <span className="lead-secure-dot" aria-hidden>
+                      ●
+                    </span>
+                    XAVFSIZ ULANISH FAOL
+                  </p>
                 </form>
               </>
             ) : (
@@ -336,24 +328,11 @@ function Footer() {
   );
 }
 
-function Field({
-  label,
-  icon: Icon,
-  children,
-}: {
-  label: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
+function LeadField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs text-muted-foreground tracking-wider font-semibold mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />}
-        {children}
-      </div>
+      <label className="lead-label">{label}</label>
+      {children}
     </div>
   );
 }
@@ -371,11 +350,7 @@ function ToggleOpt({
     <button
       type="button"
       onClick={onClick}
-      className={`py-3 lg:py-2.5 px-3 rounded-lg border text-sm font-medium transition ${
-        active
-          ? "bg-gold text-primary-foreground border-gold"
-          : "bg-input text-white border-border hover:border-gold/50"
-      }`}
+      className={`lead-toggle w-full ${active ? "lead-toggle--active" : ""}`}
     >
       {children}
     </button>

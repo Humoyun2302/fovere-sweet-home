@@ -47,9 +47,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { LeadsStatsCharts } from "@/components/LeadsStatsCharts";
 import { formatPhone, isValidPhone, PHONE_INVALID_MESSAGE, PHONE_PLACEHOLDER } from "@/lib/phone";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { countLeadsOnDay } from "@/lib/lead-stats";
 
 export const Route = createFileRoute("/admin")({
   component: AdminGuard,
@@ -249,10 +249,6 @@ function labelToChannelKey(lbl: string): Channel {
   return "other";
 }
 
-const hourlyChartConfig = {
-  count: { label: "Arizalar", color: "var(--gold)" },
-};
-
 /* ----------------- DASHBOARD ----------------- */
 function Dashboard({ onJump }: { onJump: (v: View) => void }) {
   const { leads, leadsLoading } = useStore();
@@ -262,17 +258,8 @@ function Dashboard({ onJump }: { onJump: (v: View) => void }) {
     return c;
   }, [leads]);
   const thisWeek = useMemo(() => leads.filter((l) => isThisWeek(l.createdAt)).length, [leads]);
+  const todayLeads = useMemo(() => countLeadsOnDay(leads, new Date()), [leads]);
   const conversion = leads.length ? Math.round((counts.won / leads.length) * 100) : 0;
-
-  const hourlyData = useMemo(() => {
-    const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }));
-    leads.forEach((l) => {
-      const d = new Date(l.createdAt);
-      if (Number.isNaN(d.getTime())) return;
-      buckets[d.getHours()].count++;
-    });
-    return buckets;
-  }, [leads]);
 
   const channelStats = useMemo(() => {
     const total = leads.length;
@@ -300,7 +287,7 @@ function Dashboard({ onJump }: { onJump: (v: View) => void }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPI title="Jami Arizalar" value={leads.length} sub={`Bu hafta: +${thisWeek}`} icon={Users} />
+        <KPI title="Jami Arizalar" value={leads.length} sub={`Bugun: +${todayLeads} · Hafta: +${thisWeek}`} icon={Users} />
         <KPI title="Yangi" value={counts.new} sub="Yangi arizalar" icon={UserPlus} />
         <KPI title="Mijozlar" value={counts.won} sub="Sotib oldi" icon={CheckCircle2} />
         <KPI title="Konversiya" value={`${conversion}%`} sub="O'rtacha" icon={TrendingUp} />
@@ -318,38 +305,7 @@ function Dashboard({ onJump }: { onJump: (v: View) => void }) {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6">
-        <h3 className="text-white font-semibold mb-4">Soatlik arizalar grafigi</h3>
-        {leadsLoading && leads.length === 0 ? (
-          <div className="text-center text-muted-foreground text-sm py-12">Yuklanmoqda...</div>
-        ) : (
-          <>
-            <ChartContainer config={hourlyChartConfig} className="h-[220px] w-full aspect-auto">
-              <BarChart data={hourlyData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="hour"
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 11 }}
-                  interval={0}
-                />
-                <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={28} />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(h) => `Soat ${h}:00`}
-                      formatter={(value) => [`${value} ta`, "Arizalar"]}
-                    />
-                  }
-                />
-                <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-            <p className="text-center text-xs text-muted-foreground mt-3">Soat (0-23)</p>
-          </>
-        )}
-      </div>
+      <LeadsStatsCharts leads={leads} loading={leadsLoading} />
 
       <div className="bg-card border border-border rounded-2xl p-6">
         <div className="flex items-center justify-between gap-3 mb-4">
