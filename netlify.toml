@@ -1,0 +1,10 @@
+# TanStack Start (Vite) — static output is dist/client, not dist/
+# NETLIFY=true is set automatically on Netlify; vite.config.ts uses it for prerender.
+[build]
+  command = "npm run build"
+  publish = "dist/client"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
