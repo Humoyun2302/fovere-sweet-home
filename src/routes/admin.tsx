@@ -5,10 +5,10 @@ import {
   Search, Download, Plus, Pencil, Trash2, Check, Copy, TrendingUp, UserPlus, CheckCircle2, ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { StoreProvider, useStore, STATUS_META, formatDateShort, formatDateLong, type LeadStatus } from "@/lib/store";
+import { useStore, STATUS_META, formatDateShort, formatDateLong, type LeadStatus } from "@/lib/store";
 
 export const Route = createFileRoute("/admin")({
-  component: () => <StoreProvider><Admin /></StoreProvider>,
+  component: Admin,
   head: () => ({ meta: [{ title: "CRM Panel — Fovere" }] }),
 });
 
