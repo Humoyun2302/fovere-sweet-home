@@ -1,5 +1,6 @@
-# TanStack Start (Vite) — static output is dist/client, not dist/
-# NETLIFY=true is set automatically on Netlify; vite.config.ts uses it for prerender.
+# TanStack Start on Netlify uses @netlify/vite-plugin-tanstack-start (see vite.config.ts).
+# Static assets: dist/client. SSR: .netlify/v1/functions/server.mjs (generated at build).
+# Do NOT add a catch-all redirect to index.html — there is no static index; the SSR function serves pages.
 #
 # Required in Netlify UI → Environment variables (Builds scope or All scopes):
 #   VITE_SUPABASE_URL=https://xxxx.supabase.co
@@ -8,8 +9,3 @@
 [build]
   command = "npm run build"
   publish = "dist/client"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

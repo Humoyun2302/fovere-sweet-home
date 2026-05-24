@@ -5,7 +5,10 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { loadEnv } from "vite";
+import netlify from "@netlify/vite-plugin-tanstack-start";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
+const isNetlify = process.env.NETLIFY === "true";
 
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
@@ -22,8 +25,9 @@ function supabaseEnvDefine(mode: string) {
 }
 
 export default defineConfig((env) => ({
-  // Cloudflare output uses index.js; disable on Netlify so prerender + static HTML work.
-  cloudflare: process.env.NETLIFY === "true" ? false : {},
+  // Cloudflare output uses index.js; disable on Netlify so the Netlify plugin can SSR.
+  cloudflare: isNetlify ? false : {},
+  plugins: isNetlify ? [netlify()] : [],
   vite: {
     define: supabaseEnvDefine(env.mode),
   },
