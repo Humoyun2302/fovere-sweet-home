@@ -10,15 +10,12 @@ export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Kirish — Fovere CRM" }] }),
 });
 
-const DEFAULT_EMAIL = "islomsaidametov1@gmail.com";
-const DEFAULT_PASSWORD = "fovere1234";
-
 function LoginPage() {
   const { login, user } = useStore();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState(DEFAULT_EMAIL);
-  const [password, setPassword] = useState(DEFAULT_PASSWORD);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 

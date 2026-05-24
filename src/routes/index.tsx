@@ -27,7 +27,7 @@ function Landing() {
     <div className="min-h-screen bg-canvas relative overflow-x-hidden">
       <div className="relative z-10">
         {/* Desktop: hero fits one viewport; mobile/tablet: unchanged scroll layout */}
-        <div className="relative lg:h-screen lg:flex lg:flex-col lg:overflow-hidden">
+        <div className="relative lg:h-screen lg:flex lg:flex-col lg:overflow-x-hidden">
           <LandingBackground />
 
           <section className="container mx-auto px-6 max-w-7xl lg:flex lg:flex-col lg:flex-1 lg:min-h-0 lg:py-4">

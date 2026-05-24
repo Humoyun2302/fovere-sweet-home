@@ -281,6 +281,7 @@
   background: oklch(0.14 0.038 255);
   border: 1px solid oklch(0.3 0.04 255 / 0.55);
   box-shadow: 0 28px 56px oklch(0.08 0.03 255 / 0.5);
+  overflow: visible;
 }
 
 .lead-form-title {
@@ -525,9 +526,14 @@
   }
 }
 
-/* Custom select (desktop panel / mobile sheet) */
+/* Custom select — dropdown opens under the field */
 .lead-select {
   position: relative;
+  z-index: 1;
+}
+
+.lead-select:has(.lead-select__panel--open) {
+  z-index: 50;
 }
 
 .lead-select__trigger {
@@ -601,34 +607,6 @@
   pointer-events: auto;
 }
 
-.lead-select__panel--sheet {
-  position: fixed;
-  top: auto;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 1.25rem 1.25rem 0 0;
-  padding: 0.5rem 0.75rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  max-height: min(52vh, 420px);
-  overflow-y: auto;
-  transform: translateY(100%);
-}
-
-.lead-select__panel--sheet.lead-select__panel--open {
-  transform: translateY(0);
-}
-
-.lead-select__backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 35;
-  border: none;
-  background: oklch(0.08 0.03 255 / 0.65);
-  backdrop-filter: blur(4px);
-  cursor: pointer;
-  animation: lead-sheet-fade-in 0.25s ease;
-}
-
 .lead-select__option {
   width: 100%;
   text-align: left;
@@ -651,15 +629,6 @@
   background: oklch(0.76 0.11 78 / 0.18);
   color: oklch(0.98 0 0);
   font-weight: 600;
-}
-
-@keyframes lead-sheet-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

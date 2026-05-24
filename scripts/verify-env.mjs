@@ -24,4 +24,17 @@ if (url.includes("YOUR-PROJECT") || key.includes("your-anon")) {
   process.exit(1);
 }
 
+const isLegacyAnonKey = key.startsWith("eyJ") && key.length >= 100;
+const isPublishableKey = key.startsWith("sb_publishable_") && key.length >= 30;
+
+if (!isLegacyAnonKey && !isPublishableKey) {
+  console.error(
+    "\n[build] VITE_SUPABASE_ANON_KEY is invalid.\n" +
+      "Use the anon public key from Supabase → Settings → API.\n" +
+      "Valid formats: legacy JWT (starts with eyJ...) or publishable key (starts with sb_publishable_...).\n" +
+      "Do not use the service_role / secret key.\n",
+  );
+  process.exit(1);
+}
+
 console.log("[build] Supabase env vars present.");

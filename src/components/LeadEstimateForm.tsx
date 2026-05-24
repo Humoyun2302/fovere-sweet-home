@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { CheckCircle2, ChevronDown, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { formatPhone, isValidPhone, PHONE_INVALID_MESSAGE, PHONE_PLACEHOLDER } from "@/lib/phone";
 import { useStore } from "@/lib/store";
 
@@ -21,7 +20,6 @@ type ProjectType = (typeof PROJECT_OPTIONS)[number]["value"];
 
 export function LeadEstimateForm() {
   const { addLead } = useStore();
-  const isMobile = useIsMobile();
 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -111,7 +109,6 @@ export function LeadEstimateForm() {
           options={SERVICE_OPTIONS}
           value={serviceType}
           onChange={(v) => setServiceType(v as ServiceType)}
-          isMobile={isMobile}
         />
 
         <LeadSelect
@@ -120,7 +117,6 @@ export function LeadEstimateForm() {
           options={PROJECT_OPTIONS}
           value={projectType}
           onChange={(v) => setProjectType(v as ProjectType)}
-          isMobile={isMobile}
         />
 
         <LeadField label="TAXMINIY BYUDJET *">
@@ -202,14 +198,12 @@ function LeadSelect<T extends string>({
   options,
   value,
   onChange,
-  isMobile,
 }: {
   label: string;
   placeholder: string;
   options: readonly { value: T; label: string }[];
   value: T | "";
   onChange: (value: T) => void;
-  isMobile: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -231,15 +225,6 @@ function LeadSelect<T extends string>({
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
-
-  useEffect(() => {
-    if (open && isMobile) {
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "";
-      };
-    }
-  }, [open, isMobile]);
 
   const pick = (v: T) => {
     onChange(v);
@@ -263,19 +248,10 @@ function LeadSelect<T extends string>({
         <ChevronDown className="lead-select__chevron" aria-hidden />
       </button>
 
-      {open && isMobile && (
-        <button
-          type="button"
-          className="lead-select__backdrop"
-          aria-label="Yopish"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
       <div
         id={listId}
         role="listbox"
-        className={`lead-select__panel ${isMobile ? "lead-select__panel--sheet" : ""} ${open ? "lead-select__panel--open" : ""}`}
+        className={`lead-select__panel ${open ? "lead-select__panel--open" : ""}`}
       >
         {options.map((opt) => (
           <button
