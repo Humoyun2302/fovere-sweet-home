@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Users,
   KanbanSquare,
-  Link2,
   Globe,
   LogOut,
   Search,
@@ -12,8 +11,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Check,
-  Copy,
   TrendingUp,
   UserPlus,
   CheckCircle2,
@@ -35,9 +32,8 @@ import {
   isThisWeek,
   type Lead,
   type LeadStatus,
-  type Channel,
-  type ChannelDef,
 } from "@/lib/store";
+import { PROJECT_LABELS, SERVICE_LABELS, type ServiceType, type ProjectType } from "@/lib/store-types";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +52,7 @@ export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "CRM Panel — Fovere" }] }),
 });
 
-type View = "dashboard" | "arizalar" | "kanban" | "kanallar";
+type View = "dashboard" | "arizalar" | "kanban";
 
 function AdminGuard() {
   const { user, authReady } = useStore();
@@ -81,7 +77,6 @@ const VIEW_LABELS: Record<View, string> = {
   dashboard: "Dashboard",
   arizalar: "Arizalar",
   kanban: "Kanban",
-  kanallar: "Kanallar",
 };
 
 function Admin() {
@@ -144,7 +139,6 @@ function Admin() {
           {view === "dashboard" && <Dashboard onJump={navigateTo} />}
           {view === "arizalar" && <Arizalar />}
           {view === "kanban" && <Kanban />}
-          {view === "kanallar" && <Kanallar />}
         </div>
       </main>
     </div>
@@ -172,7 +166,6 @@ function Sidebar({
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "arizalar", label: "Arizalar", icon: Users },
     { id: "kanban", label: "Kanban", icon: KanbanSquare },
-    { id: "kanallar", label: "Kanallar", icon: Link2 },
   ];
 
   const handleLogout = async () => {
@@ -240,15 +233,6 @@ function Sidebar({
   );
 }
 
-function labelToChannelKey(lbl: string): Channel {
-  const lo = lbl.toLowerCase();
-  if (lo.includes("youtube")) return "youtube";
-  if (lo.includes("instagram")) return "instagram";
-  if (lo.includes("telegram")) return "telegram";
-  if (lo === "bevosita") return "direct";
-  return "other";
-}
-
 /* ----------------- DASHBOARD ----------------- */
 function Dashboard({ onJump }: { onJump: (v: View) => void }) {
   const { leads, leadsLoading } = useStore();
@@ -260,24 +244,6 @@ function Dashboard({ onJump }: { onJump: (v: View) => void }) {
   const thisWeek = useMemo(() => leads.filter((l) => isThisWeek(l.createdAt)).length, [leads]);
   const todayLeads = useMemo(() => countLeadsOnDay(leads, new Date()), [leads]);
   const conversion = leads.length ? Math.round((counts.won / leads.length) * 100) : 0;
-
-  const channelStats = useMemo(() => {
-    const total = leads.length;
-    const map = new Map<string, { count: number; channel: Channel }>();
-    leads.forEach((l) => {
-      const prev = map.get(l.channelLabel);
-      if (prev) prev.count++;
-      else map.set(l.channelLabel, { count: 1, channel: l.channel });
-    });
-    return Array.from(map.entries())
-      .map(([label, { count, channel }]) => ({
-        label,
-        channel,
-        count,
-        share: total ? Math.round((count / total) * 100) : 0,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [leads]);
 
   return (
     <div className="space-y-6">
@@ -306,39 +272,6 @@ function Dashboard({ onJump }: { onJump: (v: View) => void }) {
       </div>
 
       <LeadsStatsCharts leads={leads} loading={leadsLoading} />
-
-      <div className="bg-card border border-border rounded-2xl p-6">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h3 className="text-white font-semibold">Kanal bo'yicha statistika</h3>
-          <button
-            type="button"
-            onClick={() => onJump("kanallar")}
-            className="text-gold text-sm inline-flex items-center gap-1 hover:underline shrink-0"
-          >
-            Kanallarni boshqarish <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-        {leadsLoading && leads.length === 0 ? (
-          <div className="text-center text-muted-foreground text-sm py-8">Yuklanmoqda...</div>
-        ) : channelStats.length === 0 ? (
-          <div className="text-center text-muted-foreground text-sm py-8">Hozircha ma'lumot yo'q</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {channelStats.map((s) => (
-              <div
-                key={s.label}
-                className="bg-background/40 border border-border rounded-xl p-5 min-w-0"
-              >
-                <div className="truncate">
-                  <ChannelBadge label={s.label} channel={s.channel} />
-                </div>
-                <div className="text-3xl font-bold text-gold mt-3">{s.count}</div>
-                <div className="text-xs text-muted-foreground mt-1">{s.share}% ulush</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div className="bg-card border border-border rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
@@ -370,6 +303,10 @@ function Dashboard({ onJump }: { onJump: (v: View) => void }) {
                   <div className="flex-1 min-w-0">
                     <div className="text-white font-medium truncate">{l.name}</div>
                     <div className="text-xs text-muted-foreground">{l.phone}</div>
+                    <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                      {leadServiceLabel(l)} · {leadProjectLabel(l)}
+                      {l.areaSqm != null ? ` · ${l.areaSqm} m²` : ""}
+                    </div>
                   </div>
                   <span className={`text-xs px-3 py-1 rounded-full border ${meta.color}`}>{meta.label}</span>
                 </li>
@@ -421,30 +358,21 @@ function PipeBox({ n, label, color }: { n: number; label: string; color: string 
 /* ----------------- ARIZALAR ----------------- */
 type DateRange = "all" | "today" | "week" | "month";
 
-function ChannelBadge({ label, channel }: { label: string; channel: Channel }) {
-  const styles: Record<Channel, string> = {
-    direct: "bg-muted text-muted-foreground border-border",
-    youtube: "bg-red-500/15 text-red-300 border-red-500/30",
-    instagram: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30",
-    telegram: "bg-sky-500/15 text-sky-300 border-sky-500/30",
-    other: "bg-[color:var(--status-meet)]/15 text-[color:var(--status-meet)] border-[color:var(--status-meet)]/30",
-  };
+function leadServiceLabel(l: Lead) {
+  if (l.serviceType) return SERVICE_LABELS[l.serviceType];
+  return l.wantsRenovation ? SERVICE_LABELS.realization : SERVICE_LABELS.design;
+}
 
-  return (
-    <span
-      className={`inline-flex items-center shrink-0 px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${styles[channel]}`}
-    >
-      {label}
-    </span>
-  );
+function leadProjectLabel(l: Lead) {
+  if (l.projectType) return PROJECT_LABELS[l.projectType];
+  return "—";
 }
 
 function Arizalar() {
-  const { leads, channels, leadsLoading, updateStatus, deleteLead } = useStore();
+  const { leads, leadsLoading, updateStatus, deleteLead } = useStore();
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
   const [dateRange, setDateRange] = useState<DateRange>("all");
-  const [channelFilter, setChannelFilter] = useState<string>("all");
 
   const [editing, setEditing] = useState<Lead | null>(null);
   const [creating, setCreating] = useState(false);
@@ -469,9 +397,11 @@ function Arizalar() {
 
   const filtered = leads.filter((l) => {
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
-    if (channelFilter !== "all" && l.channelLabel !== channelFilter) return false;
     if (!inDateRange(l.createdAt)) return false;
-    if (q && !`${l.name} ${l.phone}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (q) {
+      const hay = `${l.name} ${l.phone} ${l.propertyAddress ?? ""} ${leadServiceLabel(l)} ${leadProjectLabel(l)}`.toLowerCase();
+      if (!hay.includes(q.toLowerCase())) return false;
+    }
     return true;
   });
 
@@ -480,18 +410,32 @@ function Arizalar() {
       toast.error("Eksport qilish uchun arizalar yo'q");
       return;
     }
-    const rows = [["Ism", "Telefon", "Remont", "Byudjet", "Kanal", "Status", "Sana", "Keyingi qo'ng'iroq", "Izoh"]];
+    const rows = [
+      [
+        "Ism",
+        "Telefon",
+        "Xizmat",
+        "Loyiha turi",
+        "Maydon (m²)",
+        "Byudjet",
+        "Manzil",
+        "Status",
+        "Sana",
+        "Keyingi qo'ng'iroq",
+      ],
+    ];
     filtered.forEach((l) =>
       rows.push([
         l.name,
         l.phone,
-        l.wantsRenovation ? "Ha" : "Yo'q",
-        String(l.budget ?? ""),
-        l.channelLabel,
+        leadServiceLabel(l),
+        leadProjectLabel(l),
+        l.areaSqm != null ? String(l.areaSqm) : "",
+        l.budget != null ? String(l.budget) : "",
+        l.propertyAddress ?? "",
         STATUS_META[l.status].label,
         formatDateLong(l.createdAt),
         formatDateLong(l.nextCall),
-        l.note ?? "",
       ]),
     );
     const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -568,25 +512,11 @@ function Arizalar() {
             </option>
           ))}
         </select>
-        <select
-          value={channelFilter}
-          onChange={(e) => setChannelFilter(e.target.value)}
-          className="px-3 py-1.5 rounded-full bg-card border border-border text-xs text-white hover:border-gold/50 focus:outline-none focus:border-gold"
-        >
-          <option value="all">Kanal: Barcha</option>
-          <option value="Bevosita">Kanal: Bevosita</option>
-          {channels.map((c) => (
-            <option key={c.id} value={c.name}>
-              Kanal: {c.name}
-            </option>
-          ))}
-        </select>
-        {(statusFilter !== "all" || dateRange !== "all" || channelFilter !== "all" || q) && (
+        {(statusFilter !== "all" || dateRange !== "all" || q) && (
           <button
             onClick={() => {
               setStatusFilter("all");
               setDateRange("all");
-              setChannelFilter("all");
               setQ("");
             }}
             className="px-3 py-1.5 rounded-full bg-destructive/10 border border-destructive/30 text-xs text-destructive hover:bg-destructive/20 inline-flex items-center gap-1"
@@ -604,12 +534,13 @@ function Arizalar() {
                 {[
                   "Ism",
                   "Telefon",
-                  "Remont",
+                  "Xizmat",
+                  "Loyiha",
+                  "Maydon",
                   "Byudjet",
-                  "Kanal",
+                  "Manzil",
                   "Status",
                   "Sana",
-                  "Keyingi qo'ng'iroq",
                   "Amallar",
                 ].map((h) => (
                   <th key={h} className="text-left px-4 py-3 font-semibold whitespace-nowrap">
@@ -621,7 +552,7 @@ function Arizalar() {
             <tbody className="divide-y divide-border">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
+                  <td colSpan={10} className="px-4 py-12 text-center text-muted-foreground">
                     {leadsLoading ? "Yuklanmoqda..." : "Ariza topilmadi"}
                   </td>
                 </tr>
@@ -636,18 +567,20 @@ function Arizalar() {
                         {l.phone}
                       </a>
                     </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs border ${l.wantsRenovation ? "bg-[color:var(--status-won)]/15 text-[color:var(--status-won)] border-[color:var(--status-won)]/30" : "bg-destructive/15 text-destructive border-destructive/30"}`}
-                      >
-                        {l.wantsRenovation ? "Ha" : "Yo'q"}
-                      </span>
+                    <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap max-w-[140px] truncate">
+                      {leadServiceLabel(l)}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap max-w-[120px] truncate">
+                      {leadProjectLabel(l)}
+                    </td>
+                    <td className="px-4 py-3 text-white whitespace-nowrap">
+                      {l.areaSqm != null ? `${l.areaSqm} m²` : "—"}
                     </td>
                     <td className="px-4 py-3 text-white whitespace-nowrap">
                       {l.budget ? `$${l.budget.toLocaleString()}` : "—"}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <ChannelBadge label={l.channelLabel} channel={l.channel} />
+                    <td className="px-4 py-3 text-muted-foreground text-xs max-w-[160px] truncate" title={l.propertyAddress ?? undefined}>
+                      {l.propertyAddress ?? "—"}
                     </td>
                     <td className="px-4 py-3">
                       <select
@@ -670,7 +603,6 @@ function Arizalar() {
                       </select>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDateShort(l.createdAt)}</td>
-                    <td className="px-4 py-3 text-gold whitespace-nowrap font-medium">{formatDateLong(l.nextCall)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
@@ -747,15 +679,17 @@ function Arizalar() {
 
 /* ----------------- LEAD DIALOG (create + edit) ----------------- */
 function LeadDialog({ open, lead, onClose }: { open: boolean; lead: Lead | null; onClose: () => void }) {
-  const { updateLead, createLead, channels } = useStore();
+  const { updateLead, createLead } = useStore();
   const isEdit = !!lead;
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [serviceType, setServiceType] = useState<ServiceType | "">("");
+  const [projectType, setProjectType] = useState<ProjectType | "">("");
+  const [areaSqm, setAreaSqm] = useState("");
+  const [propertyAddress, setPropertyAddress] = useState("");
   const [budget, setBudget] = useState("");
-  const [wants, setWants] = useState(true);
   const [status, setStatus] = useState<LeadStatus>("new");
-  const [channelLabel, setChannelLabel] = useState("Bevosita");
   const [nextCall, setNextCall] = useState("");
   const [note, setNote] = useState("");
 
@@ -764,28 +698,27 @@ function LeadDialog({ open, lead, onClose }: { open: boolean; lead: Lead | null;
     if (lead) {
       setName(lead.name);
       setPhone(formatPhone(lead.phone));
+      setServiceType(lead.serviceType ?? (lead.wantsRenovation ? "realization" : "design"));
+      setProjectType(lead.projectType ?? "");
+      setAreaSqm(lead.areaSqm != null ? String(lead.areaSqm) : "");
+      setPropertyAddress(lead.propertyAddress ?? "");
       setBudget(lead.budget ? String(lead.budget) : "");
-      setWants(lead.wantsRenovation);
       setStatus(lead.status);
-      setChannelLabel(lead.channelLabel);
       setNextCall(toLocalInputValue(lead.nextCall));
       setNote(lead.note ?? "");
     } else {
       setName("");
       setPhone("");
+      setServiceType("");
+      setProjectType("");
+      setAreaSqm("");
+      setPropertyAddress("");
       setBudget("");
-      setWants(true);
       setStatus("new");
-      setChannelLabel("Bevosita");
       setNextCall(toLocalInputValue(new Date(Date.now() + 4 * 24 * 3600 * 1000).toISOString()));
       setNote("");
     }
   }, [open, lead]);
-
-  const channelOptions = useMemo(
-    () => ["Bevosita", ...channels.map((c) => c.name)],
-    [channels],
-  );
 
   const [saving, setSaving] = useState(false);
 
@@ -794,14 +727,21 @@ function LeadDialog({ open, lead, onClose }: { open: boolean; lead: Lead | null;
     if (!name.trim()) return toast.error("Ism kerak");
     if (!phone.trim()) return toast.error("Telefon kerak");
     if (!isValidPhone(phone)) return toast.error(PHONE_INVALID_MESSAGE);
+    if (!serviceType) return toast.error("Xizmat turini tanlang");
+    if (!projectType) return toast.error("Loyiha turini tanlang");
+    if (serviceType === "realization" && !budget.trim()) {
+      return toast.error("Taxminiy byudjetni kiriting");
+    }
 
     const payload = {
       name: name.trim(),
       phone: phone.trim(),
-      wantsRenovation: wants,
+      serviceType,
+      projectType,
+      areaSqm: areaSqm.trim() ? Number(areaSqm) || undefined : undefined,
+      propertyAddress: propertyAddress.trim() || undefined,
+      wantsRenovation: serviceType === "realization",
       budget: budget ? Number(budget) || undefined : undefined,
-      channel: labelToChannelKey(channelLabel),
-      channelLabel,
       status,
       nextCall: fromLocalInputValue(nextCall),
       note: note.trim() || undefined,
@@ -856,7 +796,56 @@ function LeadDialog({ open, lead, onClose }: { open: boolean; lead: Lead | null;
                 placeholder={PHONE_PLACEHOLDER}
               />
             </DialogField>
-            <DialogField label="Byudjet ($)">
+            <DialogField label="Xizmat turi *">
+              <select
+                value={serviceType}
+                onChange={(e) => {
+                  const v = e.target.value as ServiceType | "";
+                  setServiceType(v);
+                  if (v !== "realization") setBudget("");
+                }}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold"
+              >
+                <option value="">Tanlang</option>
+                {(Object.keys(SERVICE_LABELS) as ServiceType[]).map((k) => (
+                  <option key={k} value={k}>
+                    {SERVICE_LABELS[k]}
+                  </option>
+                ))}
+              </select>
+            </DialogField>
+            <DialogField label="Loyiha turi *">
+              <select
+                value={projectType}
+                onChange={(e) => setProjectType(e.target.value as ProjectType | "")}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold"
+              >
+                <option value="">Tanlang</option>
+                {(Object.keys(PROJECT_LABELS) as ProjectType[]).map((k) => (
+                  <option key={k} value={k}>
+                    {PROJECT_LABELS[k]}
+                  </option>
+                ))}
+              </select>
+            </DialogField>
+            <DialogField label="Maydon (m²)">
+              <input
+                inputMode="decimal"
+                value={areaSqm}
+                onChange={(e) => setAreaSqm(e.target.value.replace(/[^\d.]/g, ""))}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold"
+                placeholder="85"
+              />
+            </DialogField>
+            <DialogField label="Ob'ekt manzili">
+              <input
+                value={propertyAddress}
+                onChange={(e) => setPropertyAddress(e.target.value)}
+                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold"
+                placeholder="Shahar, tuman, ko'cha"
+              />
+            </DialogField>
+            <DialogField label={serviceType === "realization" ? "Byudjet ($) *" : "Byudjet ($)"}>
               <input
                 inputMode="numeric"
                 value={budget}
@@ -864,37 +853,6 @@ function LeadDialog({ open, lead, onClose }: { open: boolean; lead: Lead | null;
                 className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold"
                 placeholder="10000"
               />
-            </DialogField>
-            <DialogField label="Remont qildirmoqchi?">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWants(true)}
-                  className={`py-2 rounded-lg border text-sm transition ${wants ? "bg-gold text-primary-foreground border-gold" : "bg-input text-white border-border hover:border-gold/50"}`}
-                >
-                  Ha
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWants(false)}
-                  className={`py-2 rounded-lg border text-sm transition ${!wants ? "bg-gold text-primary-foreground border-gold" : "bg-input text-white border-border hover:border-gold/50"}`}
-                >
-                  Yo'q
-                </button>
-              </div>
-            </DialogField>
-            <DialogField label="Kanal">
-              <select
-                value={channelLabel}
-                onChange={(e) => setChannelLabel(e.target.value)}
-                className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold"
-              >
-                {channelOptions.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
             </DialogField>
             <DialogField label="Status">
               <select
@@ -1068,14 +1026,18 @@ function Kanban() {
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5 pl-5">{l.phone}</div>
-                      <div className="flex items-center gap-2 mt-2 pl-5">
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full border ${l.wantsRenovation ? "bg-gold/10 text-gold border-gold/30" : "bg-muted text-muted-foreground border-border"}`}
-                        >
-                          {l.wantsRenovation ? "Remont" : "Bonus"}
-                        </span>
+                      <div className="text-[10px] text-muted-foreground mt-1 pl-5 truncate">
+                        {leadServiceLabel(l)} · {leadProjectLabel(l)}
+                        {l.areaSqm != null ? ` · ${l.areaSqm} m²` : ""}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2 pl-5 flex-wrap">
                         {l.budget ? (
                           <span className="text-[10px] text-muted-foreground">${l.budget.toLocaleString()}</span>
+                        ) : null}
+                        {l.propertyAddress ? (
+                          <span className="text-[10px] text-muted-foreground truncate max-w-[140px]" title={l.propertyAddress}>
+                            {l.propertyAddress}
+                          </span>
                         ) : null}
                       </div>
                     </div>
@@ -1090,261 +1052,3 @@ function Kanban() {
   );
 }
 
-/* ----------------- KANALLAR ----------------- */
-function Kanallar() {
-  const { channels, leads, addChannel, updateChannel, removeChannel } = useStore();
-  const [name, setName] = useState("");
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<ChannelDef | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<ChannelDef | null>(null);
-
-  const base = typeof window !== "undefined" ? window.location.origin : "";
-
-  return (
-    <div className="space-y-5">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Kanallar</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Har bir kanal uchun noyob havola yarating
-          </p>
-        </div>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="bg-gold text-primary-foreground font-semibold text-sm px-4 py-2 rounded-lg inline-flex items-center gap-1.5"
-        >
-          <Plus className="h-4 w-4" /> Yangi kanal
-        </button>
-      </div>
-
-      {open && (
-        <div className="bg-card border border-gold/40 rounded-2xl p-4 flex gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (!name.trim()) return;
-                try {
-                  await addChannel(name.trim());
-                  setName("");
-                  setOpen(false);
-                  toast.success("Kanal qo'shildi");
-                } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Xatolik");
-                }
-              }
-            }}
-            autoFocus
-            placeholder="Kanal nomi (masalan: Instagram reels)"
-            className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:border-gold"
-          />
-          <button
-            onClick={async () => {
-              if (!name.trim()) return;
-              try {
-                await addChannel(name.trim());
-                setName("");
-                setOpen(false);
-                toast.success("Kanal qo'shildi");
-              } catch (err) {
-                toast.error(err instanceof Error ? err.message : "Xatolik");
-              }
-            }}
-            className="bg-gold text-primary-foreground font-semibold text-sm px-4 rounded-lg"
-          >
-            Saqlash
-          </button>
-          <button
-            onClick={() => {
-              setOpen(false);
-              setName("");
-            }}
-            className="border border-border text-white text-sm px-4 rounded-lg hover:bg-accent"
-          >
-            Bekor
-          </button>
-        </div>
-      )}
-
-      {channels.length === 0 ? (
-        <div className="bg-card border border-dashed border-border rounded-2xl p-12 text-center">
-          <Link2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Hozircha kanal yo'q. Birinchi kanalingizni qo'shing.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {channels.map((c) => {
-            const url = `${base}/?channel=${c.slug}`;
-            const count = leads.filter((l) => l.channelLabel === c.name).length;
-            return (
-              <div key={c.id} className="bg-card border border-border rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-full bg-[color:var(--status-won)]/20 text-[color:var(--status-won)] grid place-items-center">
-                      <Check className="h-4 w-4" />
-                    </div>
-                    <h3 className="text-white font-semibold">{c.name}</h3>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setEditing(c)}
-                      title="Tahrirlash"
-                      className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-white"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDelete(c)}
-                      title="O'chirish"
-                      className="p-1.5 rounded hover:bg-destructive/15 text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground mb-1.5">Havola:</div>
-                <div className="bg-background/60 border border-border rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-gold truncate hover:underline"
-                  >
-                    {url}
-                  </a>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(url);
-                      toast.success("Nusxalandi");
-                    }}
-                    title="Nusxalash"
-                    className="text-muted-foreground hover:text-white shrink-0"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                  <span className="text-xs text-muted-foreground">Jami arizalar:</span>
-                  <span className="text-white font-bold">{count}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Channel edit dialog */}
-      <ChannelEditDialog channel={editing} onClose={() => setEditing(null)} onSave={updateChannel} />
-
-      {/* Delete confirmation */}
-      <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <DialogContent className="bg-card border-border text-white max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white">Kanalni o'chirish</DialogTitle>
-            <DialogDescription>
-              <span className="text-white font-medium">{confirmDelete?.name}</span> kanalini o'chirmoqchimisiz?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={() => setConfirmDelete(null)}
-              className="px-4 py-2 rounded-lg border border-border text-sm text-white hover:bg-accent"
-            >
-              Bekor qilish
-            </button>
-            <button
-              onClick={async () => {
-                if (!confirmDelete) return;
-                try {
-                  await removeChannel(confirmDelete.id);
-                  toast.success("O'chirildi");
-                  setConfirmDelete(null);
-                } catch (err) {
-                  toast.error(err instanceof Error ? err.message : "Xatolik");
-                }
-              }}
-              className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-semibold hover:bg-destructive/90"
-            >
-              O'chirish
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function ChannelEditDialog({
-  channel,
-  onClose,
-  onSave,
-}: {
-  channel: ChannelDef | null;
-  onClose: () => void;
-  onSave: (id: string, patch: Partial<ChannelDef>) => Promise<void>;
-}) {
-  const [name, setName] = useState("");
-  const [saving, setSaving] = useState(false);
-  useEffect(() => {
-    if (channel) setName(channel.name);
-  }, [channel]);
-
-  const save = async () => {
-    if (!channel || !name.trim()) return;
-    setSaving(true);
-    try {
-      await onSave(channel.id, { name: name.trim() });
-      toast.success("Saqlandi");
-      onClose();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Xatolik");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={!!channel} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="bg-card border-border text-white max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="text-white">Kanalni tahrirlash</DialogTitle>
-          <DialogDescription>Kanal nomi o'zgartirilsa, havola ham yangilanadi.</DialogDescription>
-        </DialogHeader>
-        <div>
-          <label className="block text-xs text-muted-foreground tracking-wider font-semibold mb-1.5">
-            Nomi
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                save();
-              }
-            }}
-            className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold"
-          />
-        </div>
-        <DialogFooter>
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="px-4 py-2 rounded-lg border border-border text-sm text-white hover:bg-accent disabled:opacity-50"
-          >
-            Bekor qilish
-          </button>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="px-4 py-2 rounded-lg bg-gold text-primary-foreground text-sm font-semibold hover:bg-gold/90 disabled:opacity-60"
-          >
-            {saving ? "Saqlanmoqda..." : "Saqlash"}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}

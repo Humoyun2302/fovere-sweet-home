@@ -3,7 +3,7 @@ import { CheckCircle2, ChevronDown, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatPhone, isValidPhone, PHONE_INVALID_MESSAGE, PHONE_PLACEHOLDER } from "@/lib/phone";
-import { useStore, type Channel } from "@/lib/store";
+import { useStore } from "@/lib/store";
 
 const SERVICE_OPTIONS = [
   { value: "design", label: "Dizayn loyihasi" },
@@ -19,34 +19,10 @@ const PROJECT_OPTIONS = [
 type ServiceType = (typeof SERVICE_OPTIONS)[number]["value"];
 type ProjectType = (typeof PROJECT_OPTIONS)[number]["value"];
 
-function getChannelSlugFromUrl() {
-  if (typeof window === "undefined") return null;
-  return new URLSearchParams(window.location.search).get("channel");
-}
-
-function buildNote(
-  serviceType: ServiceType,
-  projectType: ProjectType,
-  area: string,
-  address: string,
-) {
-  const service = SERVICE_OPTIONS.find((o) => o.value === serviceType)?.label ?? serviceType;
-  const project = PROJECT_OPTIONS.find((o) => o.value === projectType)?.label ?? projectType;
-  const lines = [
-    `Xizmat: ${service}`,
-    `Loyiha turi: ${project}`,
-    `Maydon: ${area} m²`,
-    address.trim() ? `Manzil: ${address.trim()}` : null,
-  ].filter(Boolean);
-  return lines.join("\n");
-}
-
 export function LeadEstimateForm() {
   const { addLead } = useStore();
   const isMobile = useIsMobile();
-  const [channelSlug] = useState(getChannelSlugFromUrl);
 
-  const [formOpen, setFormOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -58,11 +34,6 @@ export function LeadEstimateForm() {
   const [phone, setPhone] = useState("");
   const [budget, setBudget] = useState("");
 
-  const toggleForm = () => {
-    if (submitted) return;
-    setFormOpen((v) => !v);
-  };
-
   const reset = () => {
     setServiceType("");
     setProjectType("");
@@ -72,7 +43,6 @@ export function LeadEstimateForm() {
     setPhone("");
     setBudget("");
     setSubmitted(false);
-    setFormOpen(false);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -82,41 +52,21 @@ export function LeadEstimateForm() {
     if (!area.trim() || Number(area) <= 0) return toast.error("Maydonni to'g'ri kiriting (m²)");
     if (!name.trim()) return toast.error("Ism-familiyangizni kiriting");
     if (!phone.trim() || !isValidPhone(phone)) return toast.error(PHONE_INVALID_MESSAGE);
-    if (serviceType === "realization" && !budget.trim()) {
-      return toast.error("Taxminiy byudjetni kiriting");
-    }
-
-    const channelKey: Channel = !channelSlug
-      ? "direct"
-      : channelSlug.includes("youtube")
-        ? "youtube"
-        : channelSlug.includes("instagram")
-          ? "instagram"
-          : channelSlug.includes("telegram")
-            ? "telegram"
-            : "other";
-
-    const channelLabel = channelSlug
-      ? channelSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-      : "Bevosita";
+    if (!budget.trim() || Number(budget) <= 0) return toast.error("Taxminiy byudjetni kiriting");
 
     setSubmitting(true);
     try {
       await addLead({
         name: name.trim(),
         phone: phone.trim(),
-        wantsRenovation: serviceType === "realization",
-        budget:
-          serviceType === "realization" && budget
-            ? Number(budget.replace(/\D/g, "")) || undefined
-            : undefined,
-        channel: channelKey,
-        channelLabel,
-        note: buildNote(serviceType, projectType, area, address),
+        serviceType,
+        projectType,
+        areaSqm: Number(area),
+        propertyAddress: address.trim() || undefined,
+        budget: Number(budget.replace(/\D/g, "")) || undefined,
       });
       toast.success("Arizangiz qabul qilindi!");
       setSubmitted(true);
-      setFormOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Yuborishda xatolik");
     } finally {
@@ -149,116 +99,90 @@ export function LeadEstimateForm() {
 
   return (
     <div className="lead-form-card p-8 lg:p-6 lg:flex lg:flex-col lg:min-h-0">
-      <div className="lead-intro">
-        <p className="lead-intro__text">
-          Premium interyer va arxitektura xizmatlari. Loyihangiz bo'yicha taxminiy narxni bir necha
-          daqiqada oling — quyidagi formani to'ldiring.
-        </p>
-        <button
-          type="button"
-          onClick={toggleForm}
-          className={`lead-cta ${formOpen ? "lead-cta--open" : ""}`}
-          aria-expanded={formOpen}
-          aria-controls="lead-estimate-form"
-        >
-          {formOpen ? "Formani yopish" : "Narxni hisoblash"}
-          <ChevronDown className="lead-cta__icon" aria-hidden />
-        </button>
-      </div>
+      <p className="lead-intro__text text-center mb-6">
+        Premium interyer va arxitektura xizmatlari. Loyihangiz bo'yicha taxminiy narxni olish uchun
+        formani to'ldiring.
+      </p>
 
-      <div
-        id="lead-estimate-form"
-        className={`lead-form-expand ${formOpen ? "lead-form-expand--open" : ""}`}
-      >
-        <div className="lead-form-expand__inner">
-          <form onSubmit={submit} className="lead-form lead-form-grid" noValidate>
-            <LeadSelect
-              label="XIZMAT TURI *"
-              placeholder="Xizmatni tanlang"
-              options={SERVICE_OPTIONS}
-              value={serviceType}
-              onChange={(v) => {
-                setServiceType(v as ServiceType);
-                if (v !== "realization") setBudget("");
-              }}
-              isMobile={isMobile}
-            />
+      <form onSubmit={submit} className="lead-form lead-form-grid" noValidate>
+        <LeadSelect
+          label="XIZMAT TURI *"
+          placeholder="Xizmatni tanlang"
+          options={SERVICE_OPTIONS}
+          value={serviceType}
+          onChange={(v) => setServiceType(v as ServiceType)}
+          isMobile={isMobile}
+        />
 
-            <LeadSelect
-              label="LOYIHA TURI *"
-              placeholder="Loyiha turini tanlang"
-              options={PROJECT_OPTIONS}
-              value={projectType}
-              onChange={(v) => setProjectType(v as ProjectType)}
-              isMobile={isMobile}
-            />
+        <LeadSelect
+          label="LOYIHA TURI *"
+          placeholder="Loyiha turini tanlang"
+          options={PROJECT_OPTIONS}
+          value={projectType}
+          onChange={(v) => setProjectType(v as ProjectType)}
+          isMobile={isMobile}
+        />
 
-            {serviceType === "realization" && (
-              <div className="lead-form-grid__full lead-budget-reveal">
-                <LeadField label="TAXMINIY BYUDJET *">
-                  <input
-                    inputMode="numeric"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value.replace(/[^\d]/g, ""))}
-                    placeholder="Masalan: 15000"
-                    className="lead-input"
-                  />
-                </LeadField>
-              </div>
-            )}
+        <LeadField label="TAXMINIY BYUDJET *">
+          <input
+            inputMode="numeric"
+            value={budget}
+            onChange={(e) => setBudget(e.target.value.replace(/[^\d]/g, ""))}
+            placeholder="Masalan: 15000"
+            className="lead-input"
+          />
+        </LeadField>
 
-            <LeadField label="MAYDON (M²) *">
-              <input
-                inputMode="decimal"
-                value={area}
-                onChange={(e) => setArea(e.target.value.replace(/[^\d.]/g, ""))}
-                placeholder="Masalan: 85"
-                className="lead-input"
-              />
-            </LeadField>
+        <LeadField label="MAYDON (M²) *">
+          <input
+            inputMode="decimal"
+            value={area}
+            onChange={(e) => setArea(e.target.value.replace(/[^\d.]/g, ""))}
+            placeholder="Masalan: 85"
+            className="lead-input"
+          />
+        </LeadField>
 
-            <LeadField label="OBYEKT MANZILI">
-              <input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Shahar, tuman, ko'cha"
-                className="lead-input"
-              />
-            </LeadField>
+        <LeadField label="OBYEKT MANZILI">
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Shahar, tuman, ko'cha"
+            className="lead-input"
+          />
+        </LeadField>
 
-            <LeadField label="ISM-FAMILIYA *">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Masalan: Ali Valiyev"
-                className="lead-input"
-              />
-            </LeadField>
+        <LeadField label="ISM-FAMILIYA *">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Masalan: Ali Valiyev"
+            className="lead-input"
+          />
+        </LeadField>
 
-            <LeadField label="TELEFON RAQAMI *">
-              <input
-                inputMode="tel"
-                value={phone}
-                onChange={(e) => setPhone(formatPhone(e.target.value))}
-                placeholder={PHONE_PLACEHOLDER}
-                className="lead-input"
-              />
-            </LeadField>
+        <LeadField label="TELEFON RAQAMI *">
+          <input
+            inputMode="tel"
+            value={phone}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
+            placeholder={PHONE_PLACEHOLDER}
+            className="lead-input"
+          />
+        </LeadField>
 
-            <div className="lead-form-grid__full">
-              <button type="submit" disabled={submitting} className="lead-submit">
-                {submitting ? "YUBORILMOQDA..." : "YUBORISH"}
-              </button>
-              <p className="lead-secure">
-                <span className="lead-secure-dot" aria-hidden>
-                  ●
-                </span>
-                XAVFSIZ ULANISH FAOL
-              </p>
-            </div>
-          </form>
+        <div className="lead-form-grid__full">
+          <button type="submit" disabled={submitting} className="lead-submit">
+            {submitting ? "YUBORILMOQDA..." : "YUBORISH"}
+          </button>
+          <p className="lead-secure">
+            <span className="lead-secure-dot" aria-hidden>
+              ●
+            </span>
+            XAVFSIZ ULANISH FAOL
+          </p>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
