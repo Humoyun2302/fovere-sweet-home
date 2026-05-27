@@ -33,8 +33,8 @@ function Landing() {
           <section className="container mx-auto px-6 max-w-7xl lg:flex lg:flex-col lg:flex-1 lg:min-h-0 lg:py-4">
             <div className="flex flex-col items-center text-center pt-8 md:pt-12 pb-6 md:pb-8 lg:pt-4 lg:pb-8 lg:shrink-0">
               <h1 className="sr-only">Fovere Sweet Home</h1>
-              <div className="w-full flex justify-center">
-                <Logo className="mx-auto" heightClass="h-20 sm:h-24 md:h-28 lg:h-24" />
+              <div className="w-full flex justify-center px-2">
+                <Logo className="mx-auto max-w-full" heightClass="h-16 sm:h-24 md:h-28 lg:h-24" />
               </div>
             </div>
 
