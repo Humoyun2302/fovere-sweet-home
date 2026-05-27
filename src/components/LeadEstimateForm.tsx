@@ -6,13 +6,13 @@ import { useStore } from "@/lib/store";
 
 const SERVICE_OPTIONS = [
   { value: "design", label: "Dizayn loyihasi" },
-  { value: "realization", label: "Loyihani amalga oshirish" },
+  { value: "realization", label: "Pod kluch remont" },
 ] as const;
 
 const PROJECT_OPTIONS = [
-  { value: "residential", label: "Turar joy interyeri" },
-  { value: "commercial", label: "Tijorat interyeri" },
-  { value: "architectural", label: "Arxitektura dizayni" },
+  { value: "residential", label: "Turar joy design loyihasi" },
+  { value: "commercial", label: "Noturar joy design loyihasi" },
+  { value: "architectural", label: "Arxitektura xizmatlari" },
 ] as const;
 
 type ServiceType = (typeof SERVICE_OPTIONS)[number]["value"];
@@ -30,7 +30,6 @@ export function LeadEstimateForm() {
   const [address, setAddress] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [budget, setBudget] = useState("");
 
   const reset = () => {
     setServiceType("");
@@ -39,7 +38,6 @@ export function LeadEstimateForm() {
     setAddress("");
     setName("");
     setPhone("");
-    setBudget("");
     setSubmitted(false);
   };
 
@@ -50,7 +48,6 @@ export function LeadEstimateForm() {
     if (!area.trim() || Number(area) <= 0) return toast.error("Maydonni to'g'ri kiriting (m²)");
     if (!name.trim()) return toast.error("Ism-familiyangizni kiriting");
     if (!phone.trim() || !isValidPhone(phone)) return toast.error(PHONE_INVALID_MESSAGE);
-    if (!budget.trim() || Number(budget) <= 0) return toast.error("Taxminiy byudjetni kiriting");
 
     setSubmitting(true);
     try {
@@ -61,7 +58,6 @@ export function LeadEstimateForm() {
         projectType,
         areaSqm: Number(area),
         propertyAddress: address.trim() || undefined,
-        budget: Number(budget.replace(/\D/g, "")) || undefined,
       });
       toast.success("Arizangiz qabul qilindi!");
       setSubmitted(true);
@@ -79,7 +75,7 @@ export function LeadEstimateForm() {
           <div className="h-16 w-16 rounded-full bg-gold/15 grid place-items-center">
             <CheckCircle2 className="h-9 w-9 text-gold" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Rahmat, {name.split(" ")[0]}!</h2>
+          <h2 className="text-2xl font-bold text-gold">Rahmat, {name.split(" ")[0]}!</h2>
           <p className="text-muted-foreground max-w-sm text-sm leading-relaxed">
             Narx bo'yicha so'rovingiz qabul qilindi. Mutaxassisimiz tez orada siz bilan bog'lanadi.
           </p>
@@ -118,16 +114,6 @@ export function LeadEstimateForm() {
           value={projectType}
           onChange={(v) => setProjectType(v as ProjectType)}
         />
-
-        <LeadField label="TAXMINIY BYUDJET *">
-          <input
-            inputMode="numeric"
-            value={budget}
-            onChange={(e) => setBudget(e.target.value.replace(/[^\d]/g, ""))}
-            placeholder="Masalan: 15000"
-            className="lead-input"
-          />
-        </LeadField>
 
         <LeadField label="MAYDON (M²) *">
           <input
@@ -242,7 +228,7 @@ function LeadSelect<T extends string>({
         aria-expanded={open}
         aria-controls={listId}
       >
-        <span className={selected ? "text-white" : "text-muted-foreground/70"}>
+        <span className={selected ? "lead-select__value" : "lead-select__placeholder"}>
           {selected?.label ?? placeholder}
         </span>
         <ChevronDown className="lead-select__chevron" aria-hidden />

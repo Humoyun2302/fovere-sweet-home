@@ -32,13 +32,10 @@ function Landing() {
 
           <section className="container mx-auto px-6 max-w-7xl lg:flex lg:flex-col lg:flex-1 lg:min-h-0 lg:py-4">
             <div className="flex flex-col items-center text-center pt-8 md:pt-12 pb-6 md:pb-8 lg:pt-3 lg:pb-6 lg:shrink-0">
-              <Logo heightClass="h-12 md:h-14 lg:h-10" />
-              <h1 className="hero-headline font-bold tracking-tight text-4xl sm:text-5xl md:text-6xl lg:text-[3.4rem] mt-6 md:mt-10 lg:mt-3 max-w-4xl">
-                <span className="hero-headline__line">
-                  <span className="text-gradient-gold">REMONT QILISH</span>{" "}
-                  <span className="text-gradient-light">BIZ</span>
-                </span>
-                <span className="hero-headline__line text-gradient-light">BILAN OSON</span>
+              <Logo heightClass="h-16 md:h-20 lg:h-14" />
+              <h1 className="hero-headline font-semibold tracking-tight text-2xl sm:text-3xl md:text-4xl lg:text-[1.75rem] mt-4 md:mt-6 lg:mt-3 max-w-3xl text-gold">
+                <span className="hero-headline__line">REMONT QILISH BIZ</span>
+                <span className="hero-headline__line">BILAN OSON</span>
               </h1>
             </div>
 
@@ -61,17 +58,13 @@ function Landing() {
               <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" /> 6 YILLIK TAJRIBA
             </span>
 
-            <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-4 text-left">
-              <div className="leading-[0.92]">
-                <span className="block text-white text-4xl lg:text-[2rem] xl:text-4xl font-bold">
-                  Islombek
-                </span>
-                <span className="block text-gold text-4xl lg:text-[2rem] xl:text-4xl font-bold">
-                  Saidametov
-                </span>
+            <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-5 text-left">
+              <div className="founder-name">
+                <span className="founder-name__first">Islombek</span>
+                <span className="founder-name__last">Saidametov</span>
               </div>
-              <p className="text-gold text-xs md:text-sm font-bold tracking-[0.22em] uppercase mt-3 lg:mt-2.5">
-                FOVERE DIZAYN STUDIYASI ASOSCHISI
+              <p className="founder-tagline">
+                Fovere dizayn studiyasi asoschisi
               </p>
             </div>
               </div>
@@ -89,7 +82,6 @@ function LandingBackground() {
   return (
     <div className="landing-bg" aria-hidden>
       <div className="landing-bg__mesh" />
-      <div className="landing-bg__orb landing-bg__orb--gold" />
       <div className="landing-bg__orb landing-bg__orb--navy-left" />
       <div className="landing-bg__orb landing-bg__orb--navy-right" />
       <div className="landing-bg__grid" />
@@ -111,7 +103,7 @@ function Footer() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <h4 className="text-white text-xs font-semibold tracking-[0.2em] uppercase">ALOQA</h4>
+            <h4 className="text-gold text-xs font-semibold tracking-[0.2em] uppercase">ALOQA</h4>
             <ul className="space-y-3 text-sm">
               <li>
                 <a
@@ -139,7 +131,7 @@ function Footer() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <h4 className="text-white text-xs font-semibold tracking-[0.2em] uppercase">
+            <h4 className="text-gold text-xs font-semibold tracking-[0.2em] uppercase">
               IJTIMOIY TARMOQLAR
             </h4>
             <div className="flex items-center gap-3">
