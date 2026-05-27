@@ -10,8 +10,8 @@ const SERVICE_OPTIONS = [
 ] as const;
 
 const PROJECT_OPTIONS = [
-  { value: "residential", label: "Turar joy design loyihasi" },
-  { value: "commercial", label: "Noturar joy design loyihasi" },
+  { value: "residential", label: "Turar joy loyihasi" },
+  { value: "commercial", label: "Noturar joy loyihasi" },
   { value: "architectural", label: "Arxitektura xizmatlari" },
 ] as const;
 

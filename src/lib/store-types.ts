@@ -8,8 +8,8 @@ export const SERVICE_LABELS: Record<ServiceType, string> = {
 };
 
 export const PROJECT_LABELS: Record<ProjectType, string> = {
-  residential: "Turar joy design loyihasi",
-  commercial: "Noturar joy design loyihasi",
+  residential: "Turar joy loyihasi",
+  commercial: "Noturar joy loyihasi",
   architectural: "Arxitektura xizmatlari",
 };
 
