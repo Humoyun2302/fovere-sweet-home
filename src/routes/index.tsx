@@ -31,12 +31,11 @@ function Landing() {
           <LandingBackground />
 
           <section className="container mx-auto px-6 max-w-7xl lg:flex lg:flex-col lg:flex-1 lg:min-h-0 lg:py-4">
-            <div className="flex flex-col items-center text-center pt-8 md:pt-12 pb-6 md:pb-8 lg:pt-3 lg:pb-6 lg:shrink-0">
-              <Logo heightClass="h-16 md:h-20 lg:h-14" />
-              <h1 className="hero-headline font-semibold tracking-tight text-2xl sm:text-3xl md:text-4xl lg:text-[1.75rem] mt-4 md:mt-6 lg:mt-3 max-w-3xl text-gold">
-                <span className="hero-headline__line">REMONT QILISH BIZ</span>
-                <span className="hero-headline__line">BILAN OSON</span>
-              </h1>
+            <div className="flex flex-col items-center text-center pt-8 md:pt-12 pb-6 md:pb-8 lg:pt-4 lg:pb-8 lg:shrink-0">
+              <h1 className="sr-only">Fovere Sweet Home</h1>
+              <div className="w-full flex justify-center">
+                <Logo className="mx-auto" heightClass="h-20 sm:h-24 md:h-28 lg:h-24" />
+              </div>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6 pb-16 lg:gap-12 lg:flex-1 lg:min-h-0 lg:pb-3 lg:items-stretch">

@@ -94,8 +94,8 @@ export function LeadEstimateForm() {
   return (
     <div className="lead-form-card p-8 lg:p-6 lg:flex lg:flex-col lg:min-h-0">
       <p className="lead-intro__text text-center mb-6">
-        Premium interyer va arxitektura xizmatlari. Loyihangiz bo'yicha taxminiy narxni olish uchun
-        formani to'ldiring.
+        <span className="lead-intro__line lead-intro__line--brand">Premium dizayn loyiha</span>
+        <span className="lead-intro__line lead-intro__line--light">va arxitektura xizmatlari</span>
       </p>
 
       <form onSubmit={submit} className="lead-form lead-form-grid" noValidate>
